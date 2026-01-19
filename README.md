@@ -275,3 +275,100 @@ interface IBuyer {
 - `address`: "Не указан адрес"
 - `phone`: "Не указан телефон"
 - `email`: "Не указан email"
+
+## Слой коммуникации
+
+Слой коммуникации отвечает за взаимодействие приложения с сервером API.
+
+### Типы данных для работы с сервером
+
+#### Интерфейс IProductList
+
+Описывает структуру ответа сервера при запросе каталога товаров.
+
+```typescript
+interface IProductList {
+	total: number // общее количество товаров
+	items: IProduct[] // массив товаров
+}
+```
+
+#### Интерфейс IOrder
+
+Описывает структуру данных заказа для отправки на сервер. Расширяет интерфейс
+`IBuyer`, добавляя информацию о заказе.
+
+```typescript
+interface IOrder extends IBuyer {
+	total: number // общая сумма заказа
+	items: IProduct['id'][] // массив идентификаторов товаров
+}
+```
+
+#### Интерфейс IOrderResult
+
+Описывает структуру ответа сервера после успешного оформления заказа.
+
+```typescript
+interface IOrderResult extends IBuyer {
+	id: string // идентификатор созданного заказа
+	total: IOrder['total'] // итоговая сумма заказа
+}
+```
+
+#### Интерфейс IOrderError
+
+Описывает структуру ответа сервера при ошибке оформления заказа.
+
+```typescript
+interface IOrderError {
+	error: string // текст ошибки
+}
+```
+
+### Класс WebLarekApi
+
+Класс для взаимодействия с API сервера «Веб-ларёк». Использует композицию с
+базовым классом `Api` для выполнения HTTP-запросов. Реализует методы для
+получения каталога товаров и оформления заказов.
+
+Конструктор:  
+`constructor(baseUrl: string, options: RequestInit = {})` - принимает базовый
+адрес сервера и опциональный объект с настройками запросов. Создаёт экземпляр
+базового класса `Api` для выполнения HTTP-запросов.
+
+Поля класса:  
+`apiModel: Api` - экземпляр базового класса `Api` для выполнения запросов.
+
+Методы класса:  
+`get(uri: string): Promise<IProductList>` - выполняет GET-запрос на указанный
+эндпоинт и возвращает промис с объектом, содержащим массив товаров каталога.  
+`post(uri: string, order: IOrder): Promise<IOrderResult | IOrderError>` - выполняет
+POST-запрос на указанный эндпоинт с данными заказа и возвращает промис с
+результатом оформления заказа или объектом ошибки.
+
+Пример использования:
+
+```typescript
+import { WebLarekApi } from './components/Models'
+
+// Создаём экземпляр WebLarekApi с базовым URL
+const apiModel = new WebLarekApi(
+	import.meta.env.VITE_API_ORIGIN + '/api/weblarek'
+)
+
+// Получаем каталог товаров
+const productsData = await apiModel.get('/product/')
+console.log('Каталог товаров:', productsData.items)
+
+// Отправляем заказ
+const orderResult = await apiModel.post('/order/', {
+	payment: 'card',
+	email: 'mail@mail.com',
+	phone: '+1234567890',
+	address: 'Адрес доставки',
+	total: 1000,
+	items: ['item-id-1', 'item-id-2']
+})
+console.log('Результат оформления заказа:', orderResult)
+```
