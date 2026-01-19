@@ -1,10 +1,10 @@
-import { IProduct } from '../../types'
+import { IBasketProduct } from '../../types'
 
 /**
  * Класс, представляющий корзину для хранения товаров.
  */
 export class Basket {
-	private items: IProduct[]
+	private items: IBasketProduct[]
 
 	constructor() {
 		this.items = []
@@ -14,7 +14,7 @@ export class Basket {
 	 * Возвращает массив всех товаров, находящихся в корзине.
 	 * @returns IProduct[]
 	 */
-	public getItems(): IProduct[] {
+	public getItems(): IBasketProduct[] {
 		return this.items
 	}
 
@@ -22,7 +22,7 @@ export class Basket {
 	 * Добавляет товар, полученный в параметре, в корзину.
 	 * @param item - Объект товара, который необходимо добавить в корзину.
 	 */
-	public add(item: IProduct): void {
+	public add(item: IBasketProduct): void {
 		this.items.push(item)
 	}
 
@@ -30,7 +30,7 @@ export class Basket {
 	 * Удаляет товар, полученный в параметре, из корзины.
 	 * @param item - Объект товара, который необходимо удалить из корзины.
 	 */
-	public remove(item: IProduct): void {
+	public remove(item: IBasketProduct): void {
 		this.items = this.items.filter(i => i.id !== item.id)
 	}
 
@@ -46,9 +46,7 @@ export class Basket {
 	 * @returns number
 	 */
 	public getTotal(): number {
-		return this.items
-			.filter(item => item.price != null)
-			.reduce((sum, item) => sum + (item.price ?? 0), 0)
+		return this.items.reduce((sum, item) => sum + item.price, 0)
 	}
 
 	/**
@@ -65,10 +63,6 @@ export class Basket {
 	 * @returns `true`, если товар с указанным идентификатором найден в корзине, иначе `false`.
 	 */
 	public contains(id: string): boolean {
-		const obj = this.items.find(item => item.id === id)
-		if (obj) {
-			return true
-		}
-		return false
+		return this.items.some(item => item.id === id)
 	}
 }

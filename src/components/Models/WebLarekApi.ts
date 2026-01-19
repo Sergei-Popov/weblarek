@@ -7,33 +7,30 @@ import { Api } from '../base/Api'
 export class WebLarekApi {
 	readonly apiModel: Api
 
-	constructor(baseUrl: string, options: RequestInit = {}) {
-		this.apiModel = new Api(baseUrl, options)
+	constructor(apiModel: Api) {
+		this.apiModel = apiModel
 	}
 
 	/**
 	 * Получение списка товаров
-	 * @param uri - URI запроса
 	 * @returns Список товаров
 	 */
-	public async get(uri: string): Promise<IProductList> {
-		return await this.apiModel.get(uri).then(data => {
-			return data as IProductList
+	public async get(): Promise<IProductList> {
+		return await this.apiModel.get<IProductList>('/product/').then(data => {
+			return data
 		})
 	}
 
 	/**
 	 * Оформление заказа
-	 * @param uri - URI запроса
 	 * @param order - Данные заказа
 	 * @returns Результат оформления заказа или ошибка
 	 */
-	public async post(
-		uri: string,
-		order: IOrder
-	): Promise<IOrderResult | IOrderError> {
-		return await this.apiModel.post(uri, order).then(data => {
-			return data as IOrderResult | IOrderError
-		})
+	public async post(order: IOrder): Promise<IOrderResult | IOrderError> {
+		return await this.apiModel
+			.post<IOrderResult | IOrderError>('/order/', order)
+			.then(data => {
+				return data
+			})
 	}
 }

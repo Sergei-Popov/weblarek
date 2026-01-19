@@ -45,8 +45,8 @@ export class Buyer {
 		this.email = ''
 	}
 
-	public validate(): object {
-		const errors: { [key: string]: string } = {}
+	public validate(): IBuyer {
+		const errors: IBuyer = {}
 		if (!this.payment) {
 			errors.payment = 'Не выбран способ оплаты'
 		}

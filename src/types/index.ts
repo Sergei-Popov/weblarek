@@ -21,12 +21,16 @@ export interface IProduct {
 	price: number | null
 }
 
+export interface IBasketProduct extends IProduct {
+	price: number
+}
+
 // Данные покупателя
 export interface IBuyer {
-	payment: TPayment
-	email: string
-	phone: string
-	address: string
+	payment?: TPayment | string
+	email?: string
+	phone?: string
+	address?: string
 }
 
 // Тип оплаты
@@ -45,7 +49,7 @@ export interface IOrder extends IBuyer {
 }
 
 // Результат оформления заказа
-export interface IOrderResult extends IBuyer {
+export interface IOrderResult {
 	id: string
 	total: IOrder['total']
 }
