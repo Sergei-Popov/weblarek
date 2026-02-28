@@ -42,13 +42,6 @@ const basketView = new BasketView(cloneTemplate(basketTpl), events)
 const orderForm = new OrderForm(cloneTemplate<HTMLFormElement>(orderTpl), events)
 const contactsForm = new ContactsForm(cloneTemplate<HTMLFormElement>(contactsTpl), events)
 
-// Флаг: корзина сейчас открыта в модалке
-let basketIsOpen = false
-// Флаг: форма заказа (шаг 1) сейчас открыта в модалке
-let orderFormIsOpen = false
-// Флаг: форма контактов (шаг 2) сейчас открыта в модалке
-let contactsFormIsOpen = false
-
 // Вспомогательная функция: создать DOM-элементы карточек корзины
 function renderBasketItems(): HTMLElement[] {
 	return basket.getItems().map((item, index) =>
@@ -121,7 +114,6 @@ events.on(AppEvents.CardRemove, (item: IBasketProduct) => {
 
 // иконка корзины в шапке
 events.on(AppEvents.BasketOpen, () => {
-	basketIsOpen = true
 	modal.render({
 		content: basketView.render({
 			items: renderBasketItems(),
@@ -131,24 +123,21 @@ events.on(AppEvents.BasketOpen, () => {
 	})
 })
 
-// обновляем счётчик и, если корзина открыта, перерисовываем список
+// обновляем счётчик и перерисовываем корзину
 events.on(AppEvents.BasketChanged, () => {
 	page.render({ counter: basket.getCount() })
-	if (basketIsOpen) {
-		basketView.render({
-			items: renderBasketItems(),
-			total: basket.getTotal(),
-			valid: basket.getCount() > 0,
-		})
-	}
+	basketView.render({
+		items: renderBasketItems(),
+		total: basket.getTotal(),
+		valid: basket.getCount() > 0,
+	})
 })
 
 // оформление — шаг 1
 
 // «Оформить» в корзине → открываем форму оплаты и адреса
 events.on(AppEvents.OrderOpen, () => {
-	orderFormIsOpen = true
-	modal.render({ content: orderForm.render({ valid: false, errors: '' }) })
+	modal.render({ content: orderForm.render() })
 })
 
 // выбор способа оплаты
@@ -163,36 +152,35 @@ events.on(AppEvents.FormChange, ({ field, value }: { field: string; value: strin
 	else if (field === 'phone') buyer.setPhone(value)
 })
 
-// при любом изменении данных покупателя перечитываем ошибки
+// при любом изменении данных покупателя обновляем обе формы
 events.on(AppEvents.BuyerChanged, () => {
+	const data = buyer.getData()
 	const errors = buyer.validate()
-	if (orderFormIsOpen) {
-		const valid = !errors.payment && !errors.address
-		const errorText = [errors.payment, errors.address].filter(Boolean).join('; ')
-		orderForm.render({ valid, errors: errorText })
-	}
-	if (contactsFormIsOpen) {
-		const valid = !errors.email && !errors.phone
-		const errorText = [errors.email, errors.phone].filter(Boolean).join('; ')
-		contactsForm.render({ valid, errors: errorText })
-	}
+
+	orderForm.render({
+		payment: data.payment,
+		address: data.address,
+		valid: !errors.payment && !errors.address,
+		errors: [errors.payment, errors.address].filter(Boolean).join('; '),
+	})
+
+	contactsForm.render({
+		email: data.email,
+		phone: data.phone,
+		valid: !errors.email && !errors.phone,
+		errors: [errors.email, errors.phone].filter(Boolean).join('; '),
+	})
 })
 
 // шаг 1 пройден — переходим к контактам
-events.on(AppEvents.OrderSubmit, ({ payment, address }: { payment: TPayment; address: string }) => {
-	buyer.setPayment(payment)
-	buyer.setAddress(address)
-	orderFormIsOpen = false
-	contactsFormIsOpen = true
-	modal.render({ content: contactsForm.render({ valid: false, errors: '' }) })
+events.on(AppEvents.OrderSubmit, () => {
+	modal.render({ content: contactsForm.render() })
 })
 
 // оформление — шаг 2
 
 // собираем заказ и отправляем
-events.on(AppEvents.ContactsSubmit, ({ email, phone }: { email: string; phone: string }) => {
-	buyer.setEmail(email)
-	buyer.setPhone(phone)
+events.on(AppEvents.ContactsSubmit, () => {
 	const orderData: IOrder = {
 		...buyer.getData(),
 		total: basket.getTotal(),
@@ -204,7 +192,6 @@ events.on(AppEvents.ContactsSubmit, ({ email, phone }: { email: string; phone: s
 			const total = (result as IOrderResult).total
 			basket.clear()
 			buyer.clear()
-			contactsFormIsOpen = false
 			const successView = new OrderSuccess(cloneTemplate(successTpl), events)
 			modal.render({ content: successView.render({ total }) })
 		})
@@ -223,15 +210,9 @@ events.on(AppEvents.ModalOpen, () => {
 	page.render({ locked: true })
 })
 
-// сбрасываем всё: флаги, формы, данные покупателя
+// закрытие модалки — только снятие блокировки прокрутки
 events.on(AppEvents.ModalClose, () => {
-	basketIsOpen = false
-	orderFormIsOpen = false
-	contactsFormIsOpen = false
 	page.render({ locked: false })
-	buyer.clear()
-	orderForm.render({ payment: '', address: '', valid: false, errors: '' })
-	contactsForm.render({ email: '', phone: '', valid: false, errors: '' })
 })
 
 // загружаем товары

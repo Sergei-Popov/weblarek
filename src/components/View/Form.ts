@@ -53,7 +53,6 @@ export abstract class Form<T extends object> extends Component<T & { valid: bool
 export class OrderForm extends Form<{ payment: TPayment | ''; address: string }> {
 	private _paymentButtons: HTMLButtonElement[]
 	private _addressInput: HTMLInputElement
-	private _paymentValue: TPayment | '' = ''
 
 	constructor(container: HTMLFormElement, events: IEvents) {
 		super(container, events)
@@ -61,13 +60,10 @@ export class OrderForm extends Form<{ payment: TPayment | ''; address: string }>
 		this._paymentButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.order__buttons button'))
 		this._addressInput = container.querySelector<HTMLInputElement>('[name=address]')!
 
-		// Клик по кнопке оплаты → переключить active-класс + уведомить Presenter
+		// Клик по кнопке оплаты → уведомить Presenter
 		this._paymentButtons.forEach((button) => {
 			button.addEventListener('click', () => {
-				const payment = button.name as TPayment
-				this._paymentValue = payment
-				this._updatePaymentButtons(payment)
-				this.events.emit(AppEvents.OrderPayment, { payment })
+				this.events.emit(AppEvents.OrderPayment, { payment: button.name as TPayment })
 			})
 		})
 	}
@@ -80,7 +76,6 @@ export class OrderForm extends Form<{ payment: TPayment | ''; address: string }>
 	}
 
 	set payment(value: TPayment | '') {
-		this._paymentValue = value
 		this._updatePaymentButtons(value)
 	}
 
@@ -89,10 +84,7 @@ export class OrderForm extends Form<{ payment: TPayment | ''; address: string }>
 	}
 
 	protected onSubmit(): void {
-		this.events.emit(AppEvents.OrderSubmit, {
-			payment: this._paymentValue as TPayment,
-			address: this._addressInput.value,
-		})
+		this.events.emit(AppEvents.OrderSubmit)
 	}
 }
 
@@ -117,9 +109,6 @@ export class ContactsForm extends Form<{ email: string; phone: string }> {
 	}
 
 	protected onSubmit(): void {
-		this.events.emit(AppEvents.ContactsSubmit, {
-			email: this._emailInput.value,
-			phone: this._phoneInput.value,
-		})
+		this.events.emit(AppEvents.ContactsSubmit)
 	}
 }

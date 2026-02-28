@@ -3,13 +3,13 @@ import { IEvents } from '../base/Events'
 import { AppEvents } from '../../utils/constants'
 
 export class Buyer {
-	private payment: TPayment
+	private payment: TPayment | '' = ''
 	private address: string
 	private phone: string
 	private email: string
 
 	constructor(protected events: IEvents) {
-		this.payment = '' as TPayment
+		this.payment = ''
 		this.address = ''
 		this.phone = ''
 		this.email = ''
@@ -45,14 +45,15 @@ export class Buyer {
 	}
 
 	public clear(): void {
-		this.payment = '' as TPayment
+		this.payment = ''
 		this.address = ''
 		this.phone = ''
 		this.email = ''
+		this.events.emit(AppEvents.BuyerChanged, this.getData())
 	}
 
-	public validate(): IBuyer {
-		const errors: IBuyer = {}
+	public validate(): Partial<Record<keyof IBuyer, string>> {
+		const errors: Partial<Record<keyof IBuyer, string>> = {}
 		if (!this.payment) {
 			errors.payment = 'Не выбран способ оплаты'
 		}
