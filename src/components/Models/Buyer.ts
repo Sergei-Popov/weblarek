@@ -1,4 +1,6 @@
 import { IBuyer, TPayment } from '../../types'
+import { IEvents } from '../base/Events'
+import { AppEvents } from '../../utils/constants'
 
 export class Buyer {
 	private payment: TPayment
@@ -6,7 +8,7 @@ export class Buyer {
 	private phone: string
 	private email: string
 
-	constructor() {
+	constructor(protected events: IEvents) {
 		this.payment = '' as TPayment
 		this.address = ''
 		this.phone = ''
@@ -15,18 +17,22 @@ export class Buyer {
 
 	public setPayment(value: TPayment): void {
 		this.payment = value
+		this.events.emit(AppEvents.BuyerChanged, this.getData())
 	}
 
 	public setAddress(value: string): void {
 		this.address = value
+		this.events.emit(AppEvents.BuyerChanged, this.getData())
 	}
 
 	public setPhone(value: string): void {
 		this.phone = value
+		this.events.emit(AppEvents.BuyerChanged, this.getData())
 	}
 
 	public setEmail(value: string): void {
 		this.email = value
+		this.events.emit(AppEvents.BuyerChanged, this.getData())
 	}
 
 	public getData(): IBuyer {
@@ -34,7 +40,7 @@ export class Buyer {
 			payment: this.payment,
 			address: this.address,
 			phone: this.phone,
-			email: this.email
+			email: this.email,
 		}
 	}
 
